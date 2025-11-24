@@ -1,0 +1,77 @@
+import java.util.Scanner;
+
+public class VigenereCipher {
+
+    
+    public static String generateKey(String text, String key) {
+        StringBuilder newKey = new StringBuilder(key);
+        while (newKey.length() < text.length()) {
+            newKey.append(key);
+        }
+        return newKey.substring(0, text.length()).toUpperCase();
+    }
+
+    
+    public static String encrypt(String text, String key) {
+        StringBuilder cipherText = new StringBuilder();
+
+        for (int i = 0; i < text.length(); i++) {
+            char p = text.charAt(i);
+            char k = key.charAt(i);
+
+           
+            if (Character.isUpperCase(p)) {
+                char c = (char) ((p + k - 2 * 'A') % 26 + 'A');
+                cipherText.append(c);
+            } else if (Character.isLowerCase(p)) {
+                char c = (char) ((Character.toUpperCase(p) + k - 2 * 'A') % 26 + 'A');
+                cipherText.append(Character.toLowerCase(c));
+            } else {
+                cipherText.append(p); 
+            }
+        }
+        return cipherText.toString();
+    }
+
+   
+    public static String decrypt(String cipherText, String key) {
+        StringBuilder plainText = new StringBuilder();
+
+        for (int i = 0; i < cipherText.length(); i++) {
+            char c = cipherText.charAt(i);
+            char k = key.charAt(i);
+
+            if (Character.isUpperCase(c)) {
+                char p = (char) ((c - k + 26) % 26 + 'A');
+                plainText.append(p);
+            } else if (Character.isLowerCase(c)) {
+                char p = (char) ((Character.toUpperCase(c) - k + 26) % 26 + 'A');
+                plainText.append(Character.toLowerCase(p));
+            } else {
+                plainText.append(c);
+            }
+        }
+        return plainText.toString();
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter the plaintext: ");
+        String text = sc.nextLine().toUpperCase().replaceAll("[^A-Z]", "");
+
+        System.out.print("Enter the key: ");
+        String key = sc.nextLine().toUpperCase().replaceAll("[^A-Z]", "");
+
+        String generatedKey = generateKey(text, key);
+
+        String cipherText = encrypt(text, generatedKey);
+        String decryptedText = decrypt(cipherText, generatedKey);
+
+        System.out.println("\nGenerated Key: " + generatedKey);
+        System.out.println("Encrypted Text: " + cipherText);
+        System.out.println("Decrypted Text: " + decryptedText);
+
+        sc.close();
+    }
+}

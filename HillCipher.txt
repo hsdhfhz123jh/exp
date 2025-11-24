@@ -1,0 +1,136 @@
+import java.util.*;
+
+public class HillCipher {
+
+   
+    public static int[] multiplyMatrix(int[][] matrix, int[] vector, int n) {
+        int[] result = new int[n];
+        for (int i = 0; i < n; i++) {
+            result[i] = 0;
+            for (int j = 0; j < n; j++) {
+                result[i] += matrix[i][j] * vector[j];
+            }
+            result[i] %= 26;
+        }
+        return result;
+    }
+
+    
+    public static int determinant(int[][] mat, int n) {
+        int det = 0;
+        if (n == 2) {
+            det = mat[0][0] * mat[1][1] - mat[0][1] * mat[1][0];
+        } else if (n == 3) {
+            det = mat[0][0] * (mat[1][1] * mat[2][2] - mat[1][2] * mat[2][1])
+                - mat[0][1] * (mat[1][0] * mat[2][2] - mat[1][2] * mat[2][0])
+                + mat[0][2] * (mat[1][0] * mat[2][1] - mat[1][1] * mat[2][0]);
+        }
+        return ((det % 26) + 26) % 26;  
+    }
+
+   
+    public static int modInverse(int det) {
+        for (int i = 1; i < 26; i++) {
+            if ((det * i) % 26 == 1) return i;
+        }
+        return -1;
+    }
+
+    // Find inverse key matrix
+    public static int[][] inverseMatrix(int[][] mat, int n) {
+        int det = determinant(mat, n);
+        int invDet = modInverse(det);
+
+        if (invDet == -1) {
+            throw new ArithmeticException("Key matrix is not invertible mod 26. Choose a different key.");
+        }
+
+        int[][] adj = new int[n][n];
+        
+        if (n == 2) {
+            adj[0][0] = mat[1][1];
+            adj[0][1] = -mat[0][1];
+            adj[1][0] = -mat[1][0];
+            adj[1][1] = mat[0][0];
+        } else if (n == 3) {
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < n; j++) {
+                    int[][] sub = new int[2][2];
+                    int r = 0, c = 0;
+                    for (int x = 0; x < n; x++) {
+                        for (int y = 0; y < n; y++) {
+                            if (x != i && y != j) {
+                                sub[r][c++] = mat[x][y];
+                                if (c == 2) { r++; c = 0; }
+                            }
+                        }
+                    }
+                    int minor = sub[0][0] * sub[1][1] - sub[0][1] * sub[1][0];
+                    adj[j][i] = ((int)Math.pow(-1, i + j) * minor) % 26;
+                }
+            }
+        }
+
+       
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                adj[i][j] = (adj[i][j] * invDet) % 26;
+                if (adj[i][j] < 0) adj[i][j] += 26;
+            }
+        }
+        return adj;
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter matrix size (2 or 3): ");
+        int n = sc.nextInt();
+
+        int[][] keyMatrix = new int[n][n];
+        System.out.println("Enter key matrix values row-wise:");
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j < n; j++)
+                keyMatrix[i][j] = sc.nextInt() % 26;
+
+        sc.nextLine();
+        System.out.print("Enter plaintext: ");
+        String plaintext = sc.nextLine().toUpperCase().replaceAll("[^A-Z]", "");
+
+        while (plaintext.length() % n != 0) plaintext += "X";
+        System.out.println("\nProcessed Plaintext: " + plaintext);
+
+        StringBuilder cipherText = new StringBuilder();
+
+       
+        for (int i = 0; i < plaintext.length(); i += n) {
+            int[] vector = new int[n];
+            for (int j = 0; j < n; j++)
+                vector[j] = plaintext.charAt(i + j) - 'A';
+
+            int[] cipherVector = multiplyMatrix(keyMatrix, vector, n);
+            for (int v : cipherVector)
+                cipherText.append((char) (v + 'A'));
+        }
+
+        System.out.println("Encrypted Text: " + cipherText);
+
+        
+        int[][] inverseKey = inverseMatrix(keyMatrix, n);
+        StringBuilder decryptedText = new StringBuilder();
+
+        for (int i = 0; i < cipherText.length(); i += n) {
+            int[] vector = new int[n];
+            for (int j = 0; j < n; j++)
+                vector[j] = cipherText.charAt(i + j) - 'A';
+
+            int[] plainVector = multiplyMatrix(inverseKey, vector, n);
+            for (int v : plainVector)
+                decryptedText.append((char) (v + 'A'));
+        }
+
+        System.out.println("Decrypted Text: " + decryptedText);
+
+        sc.close();
+    }
+}

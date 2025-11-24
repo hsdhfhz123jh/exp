@@ -1,0 +1,162 @@
+import java.util.*;
+
+public class PlayfairCipher {
+
+  
+    public static char[][] generateKeyMatrix(String key) {
+        boolean[] used = new boolean[26];
+        char[][] matrix = new char[5][5];
+        key = key.toUpperCase().replaceAll("[^A-Z]", "").replace("J", "I");
+        StringBuilder keyBuilder = new StringBuilder();
+
+        
+        for (char c : key.toCharArray()) {
+            if (!used[c - 'A']) {
+                used[c - 'A'] = true;
+                keyBuilder.append(c);
+            }
+        }
+
+        
+        for (char c = 'A'; c <= 'Z'; c++) {
+            if (c == 'J') continue; // Skip J
+            if (!used[c - 'A']) {
+                keyBuilder.append(c);
+            }
+        }
+
+        
+        int k = 0;
+        for (int i = 0; i < 5; i++) {
+            for (int j = 0; j < 5; j++) {
+                matrix[i][j] = keyBuilder.charAt(k++);
+            }
+        }
+        return matrix;
+    }
+
+    
+    public static String formatPlainText(String text) {
+        text = text.toUpperCase().replaceAll("[^A-Z]", "").replace("J", "I");
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < text.length(); i++) {
+            char a = text.charAt(i);
+            if (i + 1 < text.length()) {
+                char b = text.charAt(i + 1);
+                if (a == b) {
+                    sb.append(a).append('X');
+                } else {
+                    sb.append(a).append(b);
+                    i++;
+                }
+            } else {
+                sb.append(a).append('X');
+            }
+        }
+        return sb.toString();
+    }
+
+   
+    public static int[] getPosition(char[][] matrix, char c) {
+        for (int i = 0; i < 5; i++) {
+            for (int j = 0; j < 5; j++) {
+                if (matrix[i][j] == c) {
+                    return new int[]{i, j};
+                }
+            }
+        }
+        return null;
+    }
+
+    
+    public static String encrypt(String text, char[][] matrix) {
+        StringBuilder cipherText = new StringBuilder();
+
+        for (int i = 0; i < text.length(); i += 2) {
+            char a = text.charAt(i);
+            char b = text.charAt(i + 1);
+
+            int[] posA = getPosition(matrix, a);
+            int[] posB = getPosition(matrix, b);
+
+            if (posA[0] == posB[0]) {  
+                // Same row → shift right
+                cipherText.append(matrix[posA[0]][(posA[1] + 1) % 5]);
+                cipherText.append(matrix[posB[0]][(posB[1] + 1) % 5]);
+
+            } else if (posA[1] == posB[1]) {  
+                // Same column → shift down
+                cipherText.append(matrix[(posA[0] + 1) % 5][posA[1]]);
+                cipherText.append(matrix[(posB[0] + 1) % 5][posB[1]]);
+
+            } else { 
+                // Rectangle rule
+                cipherText.append(matrix[posA[0]][posB[1]]);
+                cipherText.append(matrix[posB[0]][posA[1]]);
+            }
+        }
+        return cipherText.toString();
+    }
+
+    
+    public static String decrypt(String cipherText, char[][] matrix) {
+        StringBuilder plainText = new StringBuilder();
+
+        for (int i = 0; i < cipherText.length(); i += 2) {
+            char a = cipherText.charAt(i);
+            char b = cipherText.charAt(i + 1);
+
+            int[] posA = getPosition(matrix, a);
+            int[] posB = getPosition(matrix, b);
+
+            if (posA[0] == posB[0]) {  
+                // Same row → shift left
+                plainText.append(matrix[posA[0]][(posA[1] - 1 + 5) % 5]);
+                plainText.append(matrix[posB[0]][(posB[1] - 1 + 5) % 5]);
+
+            } else if (posA[1] == posB[1]) { 
+                // Same column → shift up
+                plainText.append(matrix[(posA[0] - 1 + 5) % 5][posA[1]]);
+                plainText.append(matrix[(posB[0] - 1 + 5) % 5][posB[1]]);
+
+            } else {  
+                // Rectangle rule
+                plainText.append(matrix[posA[0]][posB[1]]);
+                plainText.append(matrix[posB[0]][posA[1]]);
+            }
+        }
+        return plainText.toString();
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter the key: ");
+        String key = sc.nextLine();
+
+        System.out.print("Enter the plaintext: ");
+        String plaintext = sc.nextLine();
+
+        char[][] keyMatrix = generateKeyMatrix(key);
+
+        System.out.println("\nGenerated 5x5 Key Matrix:");
+        for (int i = 0; i < 5; i++) {
+            for (int j = 0; j < 5; j++) {
+                System.out.print(keyMatrix[i][j] + " ");
+            }
+            System.out.println();
+        }
+
+        String formattedText = formatPlainText(plaintext);
+        System.out.println("\nFormatted Plaintext: " + formattedText);
+
+        String cipherText = encrypt(formattedText, keyMatrix);
+        System.out.println("Encrypted Text: " + cipherText);
+
+        String decryptedText = decrypt(cipherText, keyMatrix);
+        System.out.println("Decrypted Text: " + decryptedText);
+
+        sc.close();
+    }
+}

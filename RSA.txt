@@ -1,0 +1,55 @@
+import java.math.BigInteger;
+import java.security.SecureRandom;
+import java.util.Scanner;
+
+public class RSATextEncryption {
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        SecureRandom random = new SecureRandom();
+
+        BigInteger p = BigInteger.probablePrime(512, random);
+        BigInteger q = BigInteger.probablePrime(512, random);
+
+
+        BigInteger n = p.multiply(q);
+        BigInteger phi = (p.subtract(BigInteger.ONE)).multiply(q.subtract(BigInteger.ONE));
+
+
+        BigInteger e = BigInteger.valueOf(65537);
+        if (!e.gcd(phi).equals(BigInteger.ONE)) {
+            e = BigInteger.valueOf(3);
+            while (e.compareTo(phi) < 0) {
+                if (e.gcd(phi).equals(BigInteger.ONE)) break;
+                e = e.add(BigInteger.TWO);
+            }
+        }
+
+        BigInteger d = e.modInverse(phi);
+
+        System.out.print("Enter plaintext message: ");
+        String plaintext = sc.nextLine();
+
+ 
+        BigInteger message = new BigInteger(plaintext.getBytes());
+
+        // Encrypt: c = m^e mod n
+        BigInteger encrypted = message.modPow(e, n);
+
+        // Decrypt: m = c^d mod n
+        BigInteger decrypted = encrypted.modPow(d, n);
+
+     
+        String decryptedText = new String(decrypted.toByteArray());
+
+        // Display results
+        System.out.println("\n--- RSA Computation ---");
+        System.out.println("Plaintext Message: " + plaintext);
+        System.out.println("Public Key (n, e) = (" + n + ", " + e + ")");
+        System.out.println("Private Key (n, d) = (" + n + ", " + d + ")");
+        System.out.println("Encrypted Message (as BigInteger) = " + encrypted);
+        System.out.println("Decrypted Message = " + decryptedText);
+
+        sc.close();
+    }
+}
