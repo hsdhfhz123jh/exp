@@ -1,0 +1,58 @@
+import java.util.*;
+
+public class SDESKeyGenerator {
+
+    // Permute bits using mapping table
+    static String permute(String in, int[] p) {
+        StringBuilder out = new StringBuilder();
+        for (int i : p) out.append(in.charAt(i - 1));
+        return out.toString();
+    }
+
+    // Left circular shift
+    static String leftShift(String s, int n) {
+        return s.substring(n) + s.substring(0, n);
+    }
+
+    public static String[] generateKeys(String key10) {
+
+        int[] P10 = {3,5,2,7,4,10,1,9,8,6};
+        int[] P8  = {6,3,7,4,8,5,10,9};
+
+        // Step 1: P10 permutation
+        String perm = permute(key10, P10);
+
+        // Step 2: Split into left & right halves
+        String L = perm.substring(0, 5);
+        String R = perm.substring(5);
+
+        // Step 3: LS-1 on both halves
+        L = leftShift(L, 1);
+        R = leftShift(R, 1);
+
+        // Step 4: Generate K1 using P8
+        String K1 = permute(L + R, P8);
+
+        // Step 5: LS-2 on both halves (cumulative)
+        L = leftShift(L, 2);
+        R = leftShift(R, 2);
+
+        // Step 6: Generate K2 using P8
+        String K2 = permute(L + R, P8);
+
+        return new String[]{K1, K2};
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter 10-bit key: ");
+        String key10 = sc.nextLine();
+
+        String[] keys = generateKeys(key10);
+        System.out.println("K1 = " + keys[0]);
+        System.out.println("K2 = " + keys[1]);
+
+        sc.close();
+    }
+}

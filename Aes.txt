@@ -1,0 +1,58 @@
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
+import java.util.Scanner;
+import java.util.Base64;
+
+public class AESExperiment {
+
+   
+    private static String bytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02X", b));
+        }
+        return sb.toString();
+    }
+
+    public static void main(String[] args) {
+        try (Scanner sc = new Scanner(System.in)) {
+
+            System.out.println("AES Encryption/Decryption (128-bit)");
+
+            
+            System.out.print("Enter 16-character key: ");
+            String keyInput = sc.nextLine();
+            if (keyInput.length() != 16) {
+                System.out.println("Error: Key must be exactly 16 characters.");
+                return;
+            }
+
+            SecretKeySpec key = new SecretKeySpec(keyInput.getBytes(), "AES");
+
+            
+            System.out.print("Enter plaintext: ");
+            String plaintext = sc.nextLine();
+
+            
+            Cipher encryptCipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+            encryptCipher.init(Cipher.ENCRYPT_MODE, key);
+            byte[] encryptedBytes = encryptCipher.doFinal(plaintext.getBytes());
+            String encryptedHex = bytesToHex(encryptedBytes);
+            String encryptedBase64 = Base64.getEncoder().encodeToString(encryptedBytes);
+
+            System.out.println("\nEncrypted (Hex): " + encryptedHex);
+            System.out.println("Encrypted (Base64): " + encryptedBase64);
+
+            
+            Cipher decryptCipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+            decryptCipher.init(Cipher.DECRYPT_MODE, key);
+            byte[] decryptedBytes = decryptCipher.doFinal(encryptedBytes);
+            String decryptedText = new String(decryptedBytes);
+
+            System.out.println("Decrypted Text: " + decryptedText);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}

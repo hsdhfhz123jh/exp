@@ -1,0 +1,44 @@
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.Signature;
+import java.util.Base64;
+import java.util.Scanner;
+
+public class DigitalSignature {
+
+    public static void main(String[] args) throws Exception {
+
+        Scanner sc = new Scanner(System.in);
+        System.out.print("Enter message to sign: ");
+        String msg = sc.nextLine();
+
+
+        KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("DSA");
+        keyPairGen.initialize(2048);
+        KeyPair pair = keyPairGen.generateKeyPair();
+        PrivateKey privKey = pair.getPrivate();
+        PublicKey pubKey = pair.getPublic();
+
+
+        Signature sign = Signature.getInstance("SHA256withDSA");
+        sign.initSign(privKey);
+        sign.update(msg.getBytes());
+        byte[] signature = sign.sign();
+
+
+        String signatureBase64 = Base64.getEncoder().encodeToString(signature);
+        System.out.println("\nDigital Signature (Base64): " + signatureBase64);
+
+
+        Signature verifySign = Signature.getInstance("SHA256withDSA");
+        verifySign.initVerify(pubKey);
+        verifySign.update(msg.getBytes());
+        boolean verified = verifySign.verify(signature);
+
+        System.out.println("\nVerification: " + (verified ? "SUCCESS ✓" : "FAILED ✗"));
+
+        sc.close();
+    }
+}

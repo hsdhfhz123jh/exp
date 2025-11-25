@@ -1,0 +1,172 @@
+import java.util.*;
+
+public class MiniDES {
+
+    static int[][] S0 = {
+        {1,0,3,2},
+        {3,2,1,0},
+        {0,2,1,3},
+        {3,1,3,2}
+    };
+
+    static int[][] S1 = {
+        {0,1,2,3},
+        {2,0,1,3},
+        {3,0,1,0},
+        {2,1,0,3}
+    };
+
+    static String permute(String in, int[] p) {
+        StringBuilder out = new StringBuilder();
+        for (int i : p) out.append(in.charAt(i - 1));
+        return out.toString();
+    }
+
+    static String leftShift(String s, int n) {
+        return s.substring(n) + s.substring(0, n);
+    }
+
+    static String xorBits(String a, String b) {
+        StringBuilder r = new StringBuilder();
+        for (int i = 0; i < a.length(); i++)
+            r.append(a.charAt(i) == b.charAt(i) ? '0' : '1');
+        return r.toString();
+    }
+
+    static String toBinary2(int x) {
+        return "" + ((x & 2) != 0 ? '1' : '0') + ((x & 1) != 0 ? '1' : '0');
+    }
+
+    static String fk(String bits, String key) {
+        String L = bits.substring(0, 4);
+        String R = bits.substring(4);
+
+        int[] EP = {4,1,2,3,2,3,4,1};
+        String R_EP = permute(R, EP);
+
+        String temp = xorBits(R_EP, key);
+
+        String left4 = temp.substring(0, 4);
+        String right4 = temp.substring(4);
+
+        int row0 = (left4.charAt(0) - '0') * 2 + (left4.charAt(3) - '0');
+        int col0 = (left4.charAt(1) - '0') * 2 + (left4.charAt(2) - '0');
+        int out0 = S0[row0][col0];
+
+        int row1 = (right4.charAt(0) - '0') * 2 + (right4.charAt(3) - '0');
+        int col1 = (right4.charAt(1) - '0') * 2 + (right4.charAt(2) - '0');
+        int out1 = S1[row1][col1];
+
+        String S_output = toBinary2(out0) + toBinary2(out1);
+
+        int[] P4 = {2,4,3,1};
+        String P4out = permute(S_output, P4);
+
+        String L_new = xorBits(L, P4out);
+        return L_new + R;
+    }
+
+    static String[] generateKeys(String key10) {
+        int[] P10 = {3,5,2,7,4,10,1,9,8,6};
+        String perm = permute(key10, P10);
+
+        String L = perm.substring(0, 5);
+        String R = perm.substring(5);
+
+        L = leftShift(L, 1);
+        R = leftShift(R, 1);
+
+        int[] P8 = {6,3,7,4,8,5,10,9};
+        String K1 = permute(L + R, P8);
+
+        L = leftShift(L, 2);
+        R = leftShift(R, 2);
+        String K2 = permute(L + R, P8);
+
+        return new String[]{K1, K2};
+    }
+
+    static String encryptBlock(String pt8, String K1, String K2) {
+        int[] IP = {2,6,3,1,4,8,5,7};
+        int[] IPinv = {4,1,3,5,7,2,8,6};
+
+        String x = permute(pt8, IP);
+        x = fk(x, K1);
+
+        x = x.substring(4) + x.substring(0, 4); // swap
+
+        x = fk(x, K2);
+        return permute(x, IPinv);
+    }
+
+    static String decryptBlock(String ct8, String K1, String K2) {
+        return encryptBlock(ct8, K2, K1);
+    }
+
+    static String charToBin(char c) {
+        StringBuilder b = new StringBuilder();
+        for (int i = 7; i >= 0; i--)
+            b.append(((c >> i) & 1) == 1 ? '1' : '0');
+        return b.toString();
+    }
+
+    static char binToChar(String b) {
+        int v = 0;
+        for (char c : b.toCharArray())
+            v = (v << 1) | (c - '0');
+        return (char) v;
+    }
+
+    static String binToHex(String bin) {
+        StringBuilder hex = new StringBuilder();
+        for (int i = 0; i < bin.length(); i += 4) {
+            int val = Integer.parseInt(bin.substring(i, i + 4), 2);
+            hex.append("0123456789ABCDEF".charAt(val));
+        }
+        return hex.toString();
+    }
+
+    static String hexToBin(String hex) {
+        StringBuilder bin = new StringBuilder();
+        for (char c : hex.toCharArray()) {
+            int x = Character.isDigit(c) ? c - '0' : Character.toUpperCase(c) - 'A' + 10;
+            for (int i = 3; i >= 0; i--)
+                bin.append(((x >> i) & 1) == 1 ? '1' : '0');
+        }
+        return bin.toString();
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter 10-bit key: ");
+        String key10 = sc.nextLine();
+
+        String[] keys = generateKeys(key10);
+        String K1 = keys[0], K2 = keys[1];
+
+        System.out.print("Enter plaintext text: ");
+        String text = sc.nextLine();
+
+        StringBuilder cipherHex = new StringBuilder();
+
+        for (char c : text.toCharArray()) {
+            String pt8 = charToBin(c);
+            String ct8 = encryptBlock(pt8, K1, K2);
+            cipherHex.append(binToHex(ct8));
+        }
+
+        System.out.println("Ciphertext (Hex): " + cipherHex);
+
+        StringBuilder decrypted = new StringBuilder();
+        for (int i = 0; i < cipherHex.length(); i += 2) {
+            String ct8 = hexToBin(cipherHex.substring(i, i + 2));
+            String pt8 = decryptBlock(ct8, K1, K2);
+            decrypted.append(binToChar(pt8));
+        }
+
+        System.out.println("Decrypted Text: " + decrypted);
+
+        sc.close();
+    }
+}

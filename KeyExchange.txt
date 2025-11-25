@@ -1,0 +1,45 @@
+import java.math.BigInteger;
+import java.util.Scanner;
+
+public class DiffieHellmanExperiment {
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter prime number (P): ");
+        int P = sc.nextInt();
+        System.out.print("Enter base number (G): ");
+        int G = sc.nextInt();
+
+    
+        System.out.print("Enter Alice's private key (a): ");
+        int a = sc.nextInt();
+        System.out.print("Enter Bob's private key (b): ");
+        int b = sc.nextInt();
+
+       
+        int X = BigInteger.valueOf(G).modPow(BigInteger.valueOf(a), BigInteger.valueOf(P)).intValue();
+        int Y = BigInteger.valueOf(G).modPow(BigInteger.valueOf(b), BigInteger.valueOf(P)).intValue();
+
+        System.out.println("\nPublic keys:");
+        System.out.println("Alice's public key (X) = " + X);
+        System.out.println("Bob's public key (Y) = " + Y);
+
+        
+        int Ka = BigInteger.valueOf(Y).modPow(BigInteger.valueOf(a), BigInteger.valueOf(P)).intValue();
+        int Kb = BigInteger.valueOf(X).modPow(BigInteger.valueOf(b), BigInteger.valueOf(P)).intValue();
+
+        
+        System.out.println("\nShared Secret Key:");
+        System.out.println("Alice's computed key = " + Ka);
+        System.out.println("Bob's computed key = " + Kb);
+
+        if (Ka == Kb) {
+            System.out.println("Success: Shared secret matches!");
+        } else {
+            System.out.println("Error: Shared secret does not match.");
+        }
+
+        sc.close();
+    }
+}
